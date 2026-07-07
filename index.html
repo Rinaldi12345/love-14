@@ -46,6 +46,7 @@
     );
 
     var loaded = false;
+
     var init = function () {
       if (loaded) return;
       loaded = true;
@@ -63,12 +64,11 @@
       ctx.fillStyle = "rgba(0,0,0,1)";
       ctx.fillRect(0, 0, width, height);
 
-      // --- BAGIAN MENGUBAH TEKS ---
       var drawText = function (pulseScale, opacity) {
         if (opacity <= 0.01) return;
         ctx.save();
-        // Ukuran font disesuaikan ke 52 agar pas untuk HP saat teks bertambah panjang
-        var fontSize = 52 * ratio * (0.88 + pulseScale * 0.12); 
+        // Ukuran teks ikut membesar/mengecil dengan sangat lembut sesuai hati
+        var fontSize = 65 * ratio * (0.88 + pulseScale * 0.12); 
         ctx.font = "bold " + fontSize + "px 'Arial', sans-serif";
         ctx.fillStyle = `rgba(255, 255, 255, ${opacity * 0.95})`; 
         
@@ -77,12 +77,9 @@
         
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        
-        // Teks sudah diubah di bawah ini:
-        ctx.fillText("I LOVE YOU SAYANG", width / 2, height / 2.2); 
+        ctx.fillText("I LOVE YOU", width / 2, height / 2.2); 
         ctx.restore();
       };
-      // ----------------------------
 
       var heartPosition = function (rad) {
         return [
@@ -140,6 +137,7 @@
       ];
 
       for (var i = 0; i < heartPointsCount; i++) {
+        // POSISI AWAL: Acak di bawah layar untuk efek muncul dari bawah
         var sX = rand() * width;
         var sY = height + rand() * 250; 
         
@@ -154,9 +152,11 @@
           f: colors[~~(rand() * colors.length)],
           trace: Array.from({ length: traceCount }, () => ({ x: sX, y: sY })),
           
+          // Variabel posisi awal dari bawah
           startX: sX,
           startY: sY,
           
+          // Variabel kosmik nebula
           introAngle: rand() * Math.PI * 2,
           introRadius: (rand() * rand() * 380 + 20) * ratio, 
           introSpeed: (rand() > 0.4 ? 1 : -1) * (rand() * 0.02 + 0.008),
@@ -164,11 +164,12 @@
         };
       }
 
+      // TIMING STRUKTUR BARU (LEBIH LAMA & SINEMATIK)
       var animFrame = 0;
-      var phase0 = 150; 
-      var phase1 = 370; 
-      var phase2 = 530; 
-      var phase3 = 690; 
+      var phase0 = 150; // FASE 0: Naik dari bawah berkumpul ke tengah (~4-5 detik)
+      var phase1 = 370; // FASE 1: Meledak & Pusaran Badai Nebula
+      var phase2 = 530; // FASE 2: Mengambang Tenang di Angkasa
+      var phase3 = 690; // FASE 3: Penyatuan Halus Membentuk Hati
       
       var time = Math.PI; 
 
@@ -176,17 +177,20 @@
         animFrame++;
         
         var pulseScale = 1.0;
+        // DETAKAN BARU: Ketika sudah jadi hati, detakannya dibuat sangat lembut & lambat
         if (animFrame > phase3) {
-            time += 0.022; 
+            time += 0.022; // Nilai kecil membuat detakan bergerak lambat nan anggun
             var n = -Math.cos(time);
-            pulseScale = 0.88 + (1 + n) * 0.06; 
+            pulseScale = 0.88 + (1 + n) * 0.06; // Berdenyut halus di skala ideal (tidak mengempis habis)
         }
         
         pulse(pulseScale, pulseScale);
 
+        // Efek kepekatan trail agar sapuan ekor partikel terlihat halus bagai sutra
         ctx.fillStyle = "rgba(0,0,0,.07)";
         ctx.fillRect(0, 0, width, height);
 
+        // Kilatan cahaya lembut sesaat setelah partikel berkumpul di tengah dan akan meledak
         if (animFrame > phase0 && animFrame < phase0 + 20) {
             var flashProgress = (animFrame - phase0) / 20;
             ctx.fillStyle = `rgba(255, 255, 255, ${0.4 * (1 - flashProgress)})`;
@@ -205,17 +209,20 @@
           var q;
 
           if (animFrame < phase0) {
+              // FASE 0: Terbang Naik dari Bawah ke Tengah secara Meliuk-liuk
               var progress = animFrame / phase0;
-              var ease = progress * progress * (3 - 2 * progress); 
+              var ease = progress * progress * (3 - 2 * progress); // Smoothstep curve
               var targetX = width / 2;
               var targetY = height / 2.2;
               
+              // Efek gelombang horizontal (meliuk seperti kunang-kunang)
               var waveX = Math.sin(animFrame * 0.04 + i) * 35 * (1 - progress) * ratio;
               q = [
                   u.startX + (targetX - u.startX) * ease + waveX,
                   u.startY + (targetY - u.startY) * ease
               ];
           } else if (animFrame < phase1) {
+              // FASE 1: Meledak dari tengah dan membentuk Pusaran Nebula
               var progress = (animFrame - phase0) / (phase1 - phase0);
               var ease = 1 - Math.pow(1 - progress, 4); 
               u.introAngle += u.introSpeed * (1 + (1 - progress) * 1.5);
@@ -225,6 +232,7 @@
                   height / 2.2 + Math.sin(u.introAngle) * currentRadius
               ];
           } else if (animFrame < phase2) {
+              // FASE 2: Debu Angkasa Mengambang Tenang
               u.introAngle += u.introSpeed * 0.3;
               var wave = Math.sin(animFrame * 0.03 + i * 0.1) * 20 * ratio;
               var currentRadius = u.introRadius + wave;
@@ -233,6 +241,7 @@
                   height / 2.2 + Math.sin(u.introAngle) * currentRadius
               ];
           } else if (animFrame < phase3) {
+              // FASE 3: Partikel Mengalir Halus Membentuk Jantung Hati
               var progress = (animFrame - phase2) / (phase3 - phase2);
               var ease = progress * progress * progress * (progress * (progress * 6 - 15) + 10); 
               
@@ -249,6 +258,7 @@
                   vortexQ[1] + (heartQ[1] - vortexQ[1]) * ease
               ];
           } else {
+              // FASE 4: Detak Jantung Romantis yang Sangat Lembut & Elegan
               q = targetPoints[u.q];
           }
 
@@ -282,6 +292,7 @@
             N.y -= config.traceK * (N.y - T.y);
           }
 
+          // Efek kelap-kelip debu bintang ajaib selama transisi awal
           if (u.sparkle && animFrame < phase3 && rand() > 0.4) {
               ctx.fillStyle = "rgba(255, 255, 255, 0.95)"; 
           } else {
@@ -291,6 +302,7 @@
           u.trace.forEach((t) => ctx.fillRect(t.x, t.y, 1.6, 1.6));
         }
 
+        // Tampilkan teks berdenyut lembut seirama hati
         var textPulse = (animFrame > phase3) ? (pulseScale - 0.88) / 0.12 : 1.0;
         drawText(textPulse, textOpacity);
         
