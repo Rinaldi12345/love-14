@@ -58,28 +58,28 @@
       var height = (canvas.height = innerHeight);
       var rand = Math.random;
 
-      // Skala dinamis agar pas di layar HP maupun Desktop
+      // Skala responsif
       var ratio = Math.min(width, height) / 800;
-      if (mobile) ratio *= 1.4; // Sedikit lebih besar di layar HP
+      if (mobile) ratio *= 1.4; 
 
       ctx.fillStyle = "rgba(0,0,0,1)";
       ctx.fillRect(0, 0, width, height);
 
-      // Fungsi teks yang berdetak dan bercahaya
-      var drawText = function (pulseScale) {
+      // Fungsi teks dengan efek Fade-in dan Glow
+      var drawText = function (pulseScale, opacity) {
+        if (opacity <= 0.01) return; // Jangan gambar jika belum waktunya
         ctx.save();
-        // Ukuran teks berdenyut sinkron dengan hati
         var fontSize = 60 * ratio * (0.85 + pulseScale * 0.15); 
         ctx.font = "bold " + fontSize + "px 'Arial', sans-serif";
-        ctx.fillStyle = "rgba(255, 255, 255, 0.95)"; // Putih terang
         
-        // Efek Glow / Cahaya
-        ctx.shadowColor = "rgba(255, 51, 102, 1)";
+        // Warna teks terpengaruh oleh opacity saat fade-in
+        ctx.fillStyle = `rgba(255, 255, 255, ${opacity * 0.95})`; 
+        
+        ctx.shadowColor = `rgba(255, 51, 102, ${opacity})`;
         ctx.shadowBlur = 20;
         
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        // Posisikan tepat di tengah lekukan hati
         ctx.fillText("I LOVE YOU", width / 2, height / 2.2); 
         ctx.restore();
       };
@@ -109,9 +109,10 @@
         ctx.fillRect(0, 0, width, height);
       });
 
-      var traceCount = mobile ? 20 : 50;
+      // Sedikit ditambah partikelnya agar saat meledak lebih padat
+      var traceCount = mobile ? 25 : 50;
       var pointsOrigin = [];
-      var dr = mobile ? 0.2 : 0.1;
+      var dr = mobile ? 0.15 : 0.08;
       for (var i = 0; i < Math.PI * 2; i += dr)
         pointsOrigin.push(scaleAndTranslate(heartPosition(i), 310, 19, 0, 0)); 
       for (var i = 0; i < Math.PI * 2; i += dr)
@@ -132,7 +133,6 @@
       };
 
       var e = [];
-      // Palet warna romantis (Crimson, Pink, Putih)
       var colors = [
         "rgba(255, 51, 102, 0.8)", 
         "rgba(255, 0, 51, 0.8)",    
@@ -140,9 +140,10 @@
         "rgba(255, 204, 204, 0.8)"  
       ];
 
+      // Mulai semua partikel dari titik TENGAN untuk efek ledakan
       for (var i = 0; i < heartPointsCount; i++) {
-        var x = rand() * width;
-        var y = rand() * height;
+        var startX = width / 2;
+        var startY = height / 2.2;
         e[i] = {
           vx: 0,
           vy: 0,
@@ -150,39 +151,117 @@
           speed: rand() + 5,
           q: ~~(rand() * heartPointsCount),
           D: 2 * (i % 2) - 1,
-          force: 0.2 * rand() + 0.7,
-          f: colors[~~(rand() * colors.length)], // Warna diambil acak dari palet
-          trace: Array.from({ length: traceCount }, () => ({ x, y })),
+          force: 0.15 * rand() + 0.7, // Dibuat lebih halus
+          f: colors[~~(rand() * colors.length)],
+          trace: Array.from({ length: traceCount }, () => ({ x: startX, y: startY })),
+          
+          // Variabel khusus untuk animasi Intro (Galaksi)
+          introAngle: rand() * Math.PI * 2,
+          introRadius: (rand() * rand() * 350 + 20) * ratio, 
+          introSpeed: (rand() > 0.5 ? 1 : -1) * (rand() * 0.03 + 0.01)
         };
       }
 
       var config = { traceK: 0.4, timeDelta: 0.6 };
-      var time = 0;
+      
+      // Timer Animasi
+      var animFrame = 0;
+      var phase1 = 120; // Durasi Ledakan Galaksi
+      var phase2 = 220; // Durasi Melayang
+      var phase3 = 350; // Durasi Penyatuan Hati
+      
+      // Waktu dibekukan di puncak ukuran agar hati terbuka penuh saat partikel datang
+      var time = Math.PI; 
 
       var loop = function () {
+        animFrame++;
+        
         var n = -Math.cos(time);
         var pulseScale = (1 + n) * 0.5;
         pulse(pulseScale, pulseScale);
-        time += (Math.sin(time) < 0 ? 9 : n > 0.8 ? 0.2 : 1) * config.timeDelta;
+        
+        // Detak jantung hanya dimulai SETELAH animasi hati selesai merangkai
+        if (animFrame > phase3) {
+            time += (Math.sin(time) < 0 ? 9 : n > 0.8 ? 0.2 : 1) * config.timeDelta;
+        }
 
         ctx.fillStyle = "rgba(0,0,0,.1)";
         ctx.fillRect(0, 0, width, height);
 
+        // Efek Flash Terang di awal animasi (Cahaya Supernova)
+        if (animFrame < 15) {
+            ctx.fillStyle = `rgba(255, 255, 255, ${1 - animFrame / 15})`;
+            ctx.fillRect(0, 0, width, height);
+        }
+
+        // Teks perlahan muncul di akhir fase 3
+        var textOpacity = 0;
+        if (animFrame > phase2 && animFrame <= phase3) {
+            textOpacity = (animFrame - phase2) / (phase3 - phase2);
+        } else if (animFrame > phase3) {
+            textOpacity = 1;
+        }
+
         for (var i = e.length; i--; ) {
           var u = e[i];
-          var q = targetPoints[u.q];
+          var q;
+
+          if (animFrame < phase1) {
+              // FASE 1: Meledak & Berputar (Efek Galaksi)
+              var progress = animFrame / phase1;
+              var ease = 1 - Math.pow(1 - progress, 3); // Melambat di ujung
+              u.introAngle += u.introSpeed;
+              var currentRadius = u.introRadius * ease;
+              q = [
+                  width / 2 + Math.cos(u.introAngle) * currentRadius,
+                  height / 2.2 + Math.sin(u.introAngle) * currentRadius
+              ];
+          } else if (animFrame < phase2) {
+              // FASE 2: Melayang bebas
+              u.introAngle += u.introSpeed * 0.5;
+              var currentRadius = u.introRadius + Math.sin(animFrame * 0.05 + i) * 15 * ratio; // Berombak
+              q = [
+                  width / 2 + Math.cos(u.introAngle) * currentRadius,
+                  height / 2.2 + Math.sin(u.introAngle) * currentRadius
+              ];
+          } else if (animFrame < phase3) {
+              // FASE 3: Partikel ditarik bersatu membentuk Hati
+              var progress = (animFrame - phase2) / (phase3 - phase2);
+              var ease = progress * progress * (3 - 2 * progress); // Gerakan smooth step
+              
+              u.introAngle += u.introSpeed * 0.2; 
+              var currentRadius = u.introRadius;
+              var vortexQ = [
+                  width / 2 + Math.cos(u.introAngle) * currentRadius,
+                  height / 2.2 + Math.sin(u.introAngle) * currentRadius
+              ];
+              var heartQ = targetPoints[u.q];
+              
+              // Menggabungkan koordinat melayang dan koordinat hati sesungguhnya
+              q = [
+                  vortexQ[0] + (heartQ[0] - vortexQ[0]) * ease,
+                  vortexQ[1] + (heartQ[1] - vortexQ[1]) * ease
+              ];
+          } else {
+              // FASE 4: Hati normal berdetak mengejar target
+              q = targetPoints[u.q];
+          }
+
           var dx = u.trace[0].x - q[0];
           var dy = u.trace[0].y - q[1];
           var length = Math.sqrt(dx * dx + dy * dy);
 
-          if (length < 10) {
-            if (rand() > 0.95) {
-              u.q = ~~(rand() * heartPointsCount);
-            } else {
-              if (rand() > 0.99) u.D *= -1;
-              u.q = (u.q + u.D) % heartPointsCount;
-              if (u.q < 0) u.q += heartPointsCount;
-            }
+          // Pergantian posisi target sesekali hanya dilakukan jika hati sudah jadi
+          if (animFrame > phase3) {
+              if (length < 10) {
+                if (rand() > 0.95) {
+                  u.q = ~~(rand() * heartPointsCount);
+                } else {
+                  if (rand() > 0.99) u.D *= -1;
+                  u.q = (u.q + u.D) % heartPointsCount;
+                  if (u.q < 0) u.q += heartPointsCount;
+                }
+              }
           }
 
           u.vx += (-dx / length) * u.speed;
@@ -203,9 +282,7 @@
           u.trace.forEach((t) => ctx.fillRect(t.x, t.y, 1.5, 1.5));
         }
 
-        // Tampilkan teks selaras dengan dentak jantung
-        drawText(pulseScale);
-        
+        drawText(pulseScale, textOpacity);
         window.requestAnimationFrame(loop, canvas);
       };
 
