@@ -4,12 +4,12 @@
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>❤️ I Love You</title>
+  <title>❤️ Special For You</title>
   <style>
     body {
       margin: 0;
       overflow: hidden;
-      background-color: #000; /* Latar belakang gelap agar warna memancar */
+      background-color: #000;
     }
     canvas {
       position: absolute;
@@ -58,25 +58,21 @@
       var height = (canvas.height = innerHeight);
       var rand = Math.random;
 
-      // Skala responsif
       var ratio = Math.min(width, height) / 800;
       if (mobile) ratio *= 1.4; 
 
       ctx.fillStyle = "rgba(0,0,0,1)";
       ctx.fillRect(0, 0, width, height);
 
-      // Fungsi teks dengan efek Fade-in dan Glow
       var drawText = function (pulseScale, opacity) {
-        if (opacity <= 0.01) return; // Jangan gambar jika belum waktunya
+        if (opacity <= 0.01) return;
         ctx.save();
-        var fontSize = 60 * ratio * (0.85 + pulseScale * 0.15); 
+        var fontSize = 65 * ratio * (0.85 + pulseScale * 0.15); 
         ctx.font = "bold " + fontSize + "px 'Arial', sans-serif";
-        
-        // Warna teks terpengaruh oleh opacity saat fade-in
         ctx.fillStyle = `rgba(255, 255, 255, ${opacity * 0.95})`; 
         
-        ctx.shadowColor = `rgba(255, 51, 102, ${opacity})`;
-        ctx.shadowBlur = 20;
+        ctx.shadowColor = `rgba(255, 30, 90, ${opacity})`;
+        ctx.shadowBlur = 25;
         
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
@@ -109,10 +105,9 @@
         ctx.fillRect(0, 0, width, height);
       });
 
-      // Sedikit ditambah partikelnya agar saat meledak lebih padat
-      var traceCount = mobile ? 25 : 50;
+      var traceCount = mobile ? 25 : 55;
       var pointsOrigin = [];
-      var dr = mobile ? 0.15 : 0.08;
+      var dr = mobile ? 0.12 : 0.06; // Partikel lebih rapat agar hati terlihat lebih detail
       for (var i = 0; i < Math.PI * 2; i += dr)
         pointsOrigin.push(scaleAndTranslate(heartPosition(i), 310, 19, 0, 0)); 
       for (var i = 0; i < Math.PI * 2; i += dr)
@@ -134,13 +129,12 @@
 
       var e = [];
       var colors = [
-        "rgba(255, 51, 102, 0.8)", 
-        "rgba(255, 0, 51, 0.8)",    
-        "rgba(255, 102, 153, 0.8)", 
-        "rgba(255, 204, 204, 0.8)"  
+        "rgba(255, 40, 90, 0.85)",  
+        "rgba(255, 0, 55, 0.85)",    
+        "rgba(255, 110, 160, 0.85)", 
+        "rgba(255, 220, 220, 0.9)"   
       ];
 
-      // Mulai semua partikel dari titik TENGAN untuk efek ledakan
       for (var i = 0; i < heartPointsCount; i++) {
         var startX = width / 2;
         var startY = height / 2.2;
@@ -148,29 +142,29 @@
           vx: 0,
           vy: 0,
           R: 2,
-          speed: rand() + 5,
+          speed: rand() * 2 + 4,
           q: ~~(rand() * heartPointsCount),
           D: 2 * (i % 2) - 1,
-          force: 0.15 * rand() + 0.7, // Dibuat lebih halus
+          force: 0.12 * rand() + 0.75, 
           f: colors[~~(rand() * colors.length)],
           trace: Array.from({ length: traceCount }, () => ({ x: startX, y: startY })),
           
-          // Variabel khusus untuk animasi Intro (Galaksi)
+          // Variabel spesifik perpanjangan intro nebula kosmik
           introAngle: rand() * Math.PI * 2,
-          introRadius: (rand() * rand() * 350 + 20) * ratio, 
-          introSpeed: (rand() > 0.5 ? 1 : -1) * (rand() * 0.03 + 0.01)
+          introRadius: (rand() * rand() * 400 + 10) * ratio, 
+          introSpeed: (rand() > 0.4 ? 1 : -1) * (rand() * 0.02 + 0.008),
+          sparkle: rand() > 0.85 // 15% partikel akan berkilau layaknya bintang
         };
       }
 
-      var config = { traceK: 0.4, timeDelta: 0.6 };
+      var config = { traceK: 0.38, timeDelta: 0.55 };
       
-      // Timer Animasi
+      // TIMING BARU (DIPERPANJANG UNTUK TEGANGAN SINEMATIK)
       var animFrame = 0;
-      var phase1 = 120; // Durasi Ledakan Galaksi
-      var phase2 = 220; // Durasi Melayang
-      var phase3 = 350; // Durasi Penyatuan Hati
+      var phase1 = 260; // FASE 1: Ledakan & Pusaran Lambat (Durasi diperlama signifikan)
+      var phase2 = 440; // FASE 2: Mengambang & Berombak Kosmik
+      var phase3 = 600; // FASE 3: Penyatuan Hati (Total Intro berkisar ~10 detik)
       
-      // Waktu dibekukan di puncak ukuran agar hati terbuka penuh saat partikel datang
       var time = Math.PI; 
 
       var loop = function () {
@@ -180,21 +174,20 @@
         var pulseScale = (1 + n) * 0.5;
         pulse(pulseScale, pulseScale);
         
-        // Detak jantung hanya dimulai SETELAH animasi hati selesai merangkai
         if (animFrame > phase3) {
             time += (Math.sin(time) < 0 ? 9 : n > 0.8 ? 0.2 : 1) * config.timeDelta;
         }
 
-        ctx.fillStyle = "rgba(0,0,0,.1)";
+        // Efek trail background disesuaikan untuk mempertahankan ketajaman cahaya partikel
+        ctx.fillStyle = "rgba(0,0,0,.08)";
         ctx.fillRect(0, 0, width, height);
 
-        // Efek Flash Terang di awal animasi (Cahaya Supernova)
-        if (animFrame < 15) {
-            ctx.fillStyle = `rgba(255, 255, 255, ${1 - animFrame / 15})`;
+        // Awal mula ledakan bintang (Supernova)
+        if (animFrame < 25) {
+            ctx.fillStyle = `rgba(255, 255, 255, ${1 - animFrame / 25})`;
             ctx.fillRect(0, 0, width, height);
         }
 
-        // Teks perlahan muncul di akhir fase 3
         var textOpacity = 0;
         if (animFrame > phase2 && animFrame <= phase3) {
             textOpacity = (animFrame - phase2) / (phase3 - phase2);
@@ -207,29 +200,30 @@
           var q;
 
           if (animFrame < phase1) {
-              // FASE 1: Meledak & Berputar (Efek Galaksi)
+              // FASE 1: Pusaran Badai Nebula (Vortex) lambat nan anggun
               var progress = animFrame / phase1;
-              var ease = 1 - Math.pow(1 - progress, 3); // Melambat di ujung
-              u.introAngle += u.introSpeed;
+              var ease = 1 - Math.pow(1 - progress, 4); 
+              u.introAngle += u.introSpeed * (1 + (1 - progress) * 1.5); // Berputar agak cepat di awal, melambat kemudian
               var currentRadius = u.introRadius * ease;
               q = [
                   width / 2 + Math.cos(u.introAngle) * currentRadius,
                   height / 2.2 + Math.sin(u.introAngle) * currentRadius
               ];
           } else if (animFrame < phase2) {
-              // FASE 2: Melayang bebas
-              u.introAngle += u.introSpeed * 0.5;
-              var currentRadius = u.introRadius + Math.sin(animFrame * 0.05 + i) * 15 * ratio; // Berombak
+              // FASE 2: Debu Angkasa Melayang Tenang
+              u.introAngle += u.introSpeed * 0.3;
+              var wave = Math.sin(animFrame * 0.03 + i * 0.1) * 20 * ratio;
+              var currentRadius = u.introRadius + wave;
               q = [
                   width / 2 + Math.cos(u.introAngle) * currentRadius,
                   height / 2.2 + Math.sin(u.introAngle) * currentRadius
               ];
           } else if (animFrame < phase3) {
-              // FASE 3: Partikel ditarik bersatu membentuk Hati
+              // FASE 3: Efek Tarikan Gravitasi Pembentukan Jantung Hati
               var progress = (animFrame - phase2) / (phase3 - phase2);
-              var ease = progress * progress * (3 - 2 * progress); // Gerakan smooth step
+              var ease = progress * progress * progress * (progress * (progress * 6 - 15) + 10); // Ultra smooth curve
               
-              u.introAngle += u.introSpeed * 0.2; 
+              u.introAngle += u.introSpeed * 0.1; 
               var currentRadius = u.introRadius;
               var vortexQ = [
                   width / 2 + Math.cos(u.introAngle) * currentRadius,
@@ -237,13 +231,12 @@
               ];
               var heartQ = targetPoints[u.q];
               
-              // Menggabungkan koordinat melayang dan koordinat hati sesungguhnya
               q = [
                   vortexQ[0] + (heartQ[0] - vortexQ[0]) * ease,
                   vortexQ[1] + (heartQ[1] - vortexQ[1]) * ease
               ];
           } else {
-              // FASE 4: Hati normal berdetak mengejar target
+              // FASE 4: Detak Jantung Romantis Abadi
               q = targetPoints[u.q];
           }
 
@@ -251,7 +244,6 @@
           var dy = u.trace[0].y - q[1];
           var length = Math.sqrt(dx * dx + dy * dy);
 
-          // Pergantian posisi target sesekali hanya dilakukan jika hati sudah jadi
           if (animFrame > phase3) {
               if (length < 10) {
                 if (rand() > 0.95) {
@@ -278,8 +270,14 @@
             N.y -= config.traceK * (N.y - T.y);
           }
 
-          ctx.fillStyle = u.f;
-          u.trace.forEach((t) => ctx.fillRect(t.x, t.y, 1.5, 1.5));
+          // Render warna + efek kerlipan bintang acak
+          if (u.sparkle && animFrame < phase3 && rand() > 0.4) {
+              ctx.fillStyle = "rgba(255, 255, 255, 0.95)"; // Berkilau putih
+          } else {
+              ctx.fillStyle = u.f;
+          }
+          
+          u.trace.forEach((t) => ctx.fillRect(t.x, t.y, 1.6, 1.6));
         }
 
         drawText(pulseScale, textOpacity);
