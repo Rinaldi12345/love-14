@@ -4,15 +4,20 @@
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>❤️</title>
+  <title>❤️ I Love You</title>
   <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background-color: #000; /* Latar belakang gelap agar warna memancar */
+    }
     canvas {
       position: absolute;
       left: 0;
       top: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0, 0, 0, 0.2);
+      width: 100vw;
+      height: 100vh;
+      display: block;
     }
   </style>
 </head>
@@ -46,21 +51,37 @@
       if (loaded) return;
       loaded = true;
       var mobile = window.isDevice;
-      var koef = mobile ? 0.5 : 1;
       var canvas = document.getElementById("heart");
       var ctx = canvas.getContext("2d");
-      var width = (canvas.width = koef * innerWidth);
-      var height = (canvas.height = koef * innerHeight);
+      
+      var width = (canvas.width = innerWidth);
+      var height = (canvas.height = innerHeight);
       var rand = Math.random;
+
+      // Skala dinamis agar pas di layar HP maupun Desktop
+      var ratio = Math.min(width, height) / 800;
+      if (mobile) ratio *= 1.4; // Sedikit lebih besar di layar HP
 
       ctx.fillStyle = "rgba(0,0,0,1)";
       ctx.fillRect(0, 0, width, height);
 
-      var drawText = function () {
-        ctx.font = "60px Arial"; 
-        ctx.fillStyle = "lightblue";
+      // Fungsi teks yang berdetak dan bercahaya
+      var drawText = function (pulseScale) {
+        ctx.save();
+        // Ukuran teks berdenyut sinkron dengan hati
+        var fontSize = 60 * ratio * (0.85 + pulseScale * 0.15); 
+        ctx.font = "bold " + fontSize + "px 'Arial', sans-serif";
+        ctx.fillStyle = "rgba(255, 255, 255, 0.95)"; // Putih terang
+        
+        // Efek Glow / Cahaya
+        ctx.shadowColor = "rgba(255, 51, 102, 1)";
+        ctx.shadowBlur = 20;
+        
         ctx.textAlign = "center";
-        ctx.fillText("", width / 2, height / 2.2 + 400); 
+        ctx.textBaseline = "middle";
+        // Posisikan tepat di tengah lekukan hati
+        ctx.fillText("I LOVE YOU", width / 2, height / 2.2); 
+        ctx.restore();
       };
 
       var heartPosition = function (rad) {
@@ -80,15 +101,17 @@
       };
 
       window.addEventListener("resize", function () {
-        width = canvas.width = koef * innerWidth;
-        height = canvas.height = koef * innerHeight;
+        width = canvas.width = innerWidth;
+        height = canvas.height = innerHeight;
+        ratio = Math.min(width, height) / 800;
+        if (mobile) ratio *= 1.4;
         ctx.fillStyle = "rgba(0,0,0,1)";
         ctx.fillRect(0, 0, width, height);
       });
 
       var traceCount = mobile ? 20 : 50;
       var pointsOrigin = [];
-      var dr = mobile ? 0.3 : 0.1;
+      var dr = mobile ? 0.2 : 0.1;
       for (var i = 0; i < Math.PI * 2; i += dr)
         pointsOrigin.push(scaleAndTranslate(heartPosition(i), 310, 19, 0, 0)); 
       for (var i = 0; i < Math.PI * 2; i += dr)
@@ -102,13 +125,21 @@
       var pulse = function (kx, ky) {
         for (var i = 0; i < pointsOrigin.length; i++) {
           targetPoints[i] = [
-            kx * pointsOrigin[i][0] + width / 2,
-            ky * pointsOrigin[i][1] + height / 2.2,
+            kx * pointsOrigin[i][0] * ratio + width / 2,
+            ky * pointsOrigin[i][1] * ratio + height / 2.2,
           ];
         }
       };
 
       var e = [];
+      // Palet warna romantis (Crimson, Pink, Putih)
+      var colors = [
+        "rgba(255, 51, 102, 0.8)", 
+        "rgba(255, 0, 51, 0.8)",    
+        "rgba(255, 102, 153, 0.8)", 
+        "rgba(255, 204, 204, 0.8)"  
+      ];
+
       for (var i = 0; i < heartPointsCount; i++) {
         var x = rand() * width;
         var y = rand() * height;
@@ -120,7 +151,7 @@
           q: ~~(rand() * heartPointsCount),
           D: 2 * (i % 2) - 1,
           force: 0.2 * rand() + 0.7,
-          f: "rgba(51, 204, 255, 0.7)",
+          f: colors[~~(rand() * colors.length)], // Warna diambil acak dari palet
           trace: Array.from({ length: traceCount }, () => ({ x, y })),
         };
       }
@@ -130,7 +161,8 @@
 
       var loop = function () {
         var n = -Math.cos(time);
-        pulse((1 + n) * 0.5, (1 + n) * 0.5);
+        var pulseScale = (1 + n) * 0.5;
+        pulse(pulseScale, pulseScale);
         time += (Math.sin(time) < 0 ? 9 : n > 0.8 ? 0.2 : 1) * config.timeDelta;
 
         ctx.fillStyle = "rgba(0,0,0,.1)";
@@ -168,10 +200,12 @@
           }
 
           ctx.fillStyle = u.f;
-          u.trace.forEach((t) => ctx.fillRect(t.x, t.y, 1, 1));
+          u.trace.forEach((t) => ctx.fillRect(t.x, t.y, 1.5, 1.5));
         }
 
-        drawText();
+        // Tampilkan teks selaras dengan dentak jantung
+        drawText(pulseScale);
+        
         window.requestAnimationFrame(loop, canvas);
       };
 
